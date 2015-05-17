@@ -1,7 +1,109 @@
 package picard.analysis;
 
+import java.util.*;
+
 /**
- * Created by davidben on 5/13/15.
+ * Created by David Benjamin on 5/13/15.
  */
 public class TheoreticalSensitivity {
+    /*
+    @param the probability of depth n is depthDistribution[n] for n = 0, 1. . . N - 1
+    @param the probability of quality q is qualityDistribution[q] for q = 0, 1. . . Q
+    @param sample size is the number of random sums of quality scores for each m
+    @param logOddsThreshold is the log_10 of the likelihood ratio required to call a SNP,
+    for example 5 if the variant likelihood must be 10^5 times greater
+     */
+    public double hetSNPSensitivity(final List<Double> depthDistribution, final List<Double> qualityDistribution,
+                                  final int sampleSize, final double logOddsThreshold) {
+        int N = depthDistribution.size();
+        RouletteWheel qualitySampler = new RouletteWheel(qualityDistribution);
+
+        //qualitySums[m] is a random sample of sums of m quality scores, for m = 0, 1, N - 1
+        List<ArrayList<Double>> qualitySums = qualitySampler.sampleCumulativeSums(N, sampleSize);
+
+        //if a quality sum of m qualities exceeds the quality sum threshold for n total reads, a SNP is called
+        ArrayList<Double> qualitySumThresholds = new ArrayList<Double>(N);
+        for (int n = 0; n < N; n++) qualitySumThresholds.add(10*(n*Math.log10(2) + logOddsThreshold));
+
+
+        //probabilityToExceedThreshold[m][n] is the probability that the sum of m quality score
+        //exceeds the nth quality sum threshold
+        List<ArrayList<Double>> probabilityToExceedThreshold = new ArrayList<ArrayList<Double>>(N);
+        for (int m = 0; m < N; m++) probabilityToExceedThreshold.add(new ArrayList<Double>(Collections.nCopies(N,0.0)));
+
+
+        for (int m = 0; m < N; m++) {
+            Collections.sort(qualitySums.get(m));
+            int n = 0;
+            int j = 0;  //index within the ordered set of qualitySum samples
+            while (n < N && j < sampleSize) {
+                if (qualitySumThresholds.get(n) > qualitySums.get(m).get(j)) {
+                    j++;
+                }
+                else {
+                    n++;
+                    probabilityToExceedThreshold.get(m).set(n, (double) (sampleSize - j)/sampleSize);
+                }
+            }
+        }
+
+        double result = 0.0;
+        for (int n = 0; n < N; n++) {
+            for (int m = 0; m <= n; m++) {
+                result += probabilityToExceedThreshold.get(m).get(n);
+            }
+        }
+        return result;
+    }
+
+
+    /*
+    Perform random draws from {0, 1. . . N - 1} according to a list of relative probabilities.
+
+    We use an O(1) stochastic acceptance algorithm -- see Physica A, Volume 391, Page 2193 (2012),
+    which works well when the ratio of maximum weight to average weight is not large.
+     */
+    public static class RouletteWheel {
+        private List<Double> probabilities;
+        private int N;
+
+        RouletteWheel(final List<Double> weights) {
+            N = weights.size();
+
+            probabilities = new ArrayList<Double>();
+            double wMax = Collections.max(weights);
+            for (final double w : weights) {
+                probabilities.add(w/wMax);
+            }
+        }
+
+        public double draw() {
+            while (true) {
+                int n = (int) (N * Math.random());
+                if (Math.random() < probabilities.get(n)) return n;
+            }
+        }
+
+        //get samples of sums of 0, 1, 2,. . .  N - 1 draws
+        public List<ArrayList<Double>> sampleCumulativeSums(final int maxNumberOfSummands, final int sampleSize) {
+            List<ArrayList<Double>> result = new ArrayList<ArrayList<Double>>();
+            for (int m = 0; m < maxNumberOfSummands; m++) result.add(new ArrayList<Double>());
+
+            for (int iteration = 0; iteration < sampleSize; iteration++) {
+                double cumulativeSum = 0;
+                for (int m = 0; m < maxNumberOfSummands; m++) {
+                    result.get(m).add(cumulativeSum);
+                    cumulativeSum += draw();
+                }
+            }
+            return result;
+        }
+
+    }
+
+    //Utility class for making table of binomial distribution probabilities nCm * (0.5)^n
+    //for n = 0, 1 . . . N - 1 and m = 0, 1. . . n
+    public static class hetAltDepthDistribution {
+        BinomialDistributionTable(int N)
+    }
 }
