@@ -24,7 +24,7 @@ public class TheoreticalSensitivityTest {
         for (int n = 0; n < 10; n++) Assert.assertEquals(deterministicWheel.draw(), 1);
 
         //test the sums of this deterministic wheel: a sum of n 1's equals n
-        List<ArrayList<Double>> deterministicSums = deterministicWheel.sampleCumulativeSums(10, 1);
+        List<ArrayList<Integer>> deterministicSums = deterministicWheel.sampleCumulativeSums(10, 1);
         for (int n = 0; n < 10; n++) Assert.assertEquals(deterministicSums.get(n).get(0), n);
 
         //test that an unfair coin w/ probability 1/4 of heads gives roughly 1/4 heads
