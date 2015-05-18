@@ -63,8 +63,8 @@ public class TheoreticalSensitivity {
         List<ArrayList<Double>> table = new ArrayList<ArrayList<Double>>();
         for (int n = 0; n < N; n++) {
             ArrayList<Double> nthRow = new ArrayList<Double>();
-            ArrayList<Double> prevRow = n == 0 ? null : table.get(n - 1);
 
+            ArrayList<Double> prevRow = n == 0 ? null : table.get(n - 1);
             //Add the m = 0 element
             nthRow.add(n == 0 ? 1 : 0.5*prevRow.get(0));
 
