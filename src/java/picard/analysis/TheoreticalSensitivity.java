@@ -28,25 +28,7 @@ public class TheoreticalSensitivity {
 
         //probabilityToExceedThreshold[m][n] is the probability that the sum of m quality score
         //exceeds the nth quality sum threshold
-        List<ArrayList<Double>> probabilityToExceedThreshold = new ArrayList<ArrayList<Double>>(N);
-        for (int m = 0; m < N; m++) probabilityToExceedThreshold.add(new ArrayList<Double>(Collections.nCopies(N,0.0)));
-
-
-        for (int m = 0; m < N; m++) {
-            Collections.sort(qualitySums.get(m));
-            int n = 0;
-            int j = 0;  //index within the ordered set of qualitySum samples
-            while (n < N && j < sampleSize) {
-                if (qualitySumThresholds.get(n) > qualitySums.get(m).get(j)) {
-                    j++;
-                }
-                else {
-                    n++;
-                    probabilityToExceedThreshold.get(m).set(n, (double) (sampleSize - j)/sampleSize);
-                }
-            }
-        }
-
+        List<ArrayList<Double>> probabilityToExceedThreshold = proportionsAboveThresholds(qualitySums, qualitySumThresholds);
         List<ArrayList<Double>> altDepthDistribution = hetAltDepthDistribution(N);
         double result = 0.0;
         for (int n = 0; n < N; n++) {
@@ -56,6 +38,34 @@ public class TheoreticalSensitivity {
         }
         return result;
     }
+
+    //given L lists of lists and N thresholds, count the proportion of each list above each threshold
+    public static List<ArrayList<Double>> proportionsAboveThresholds(final List<ArrayList<Integer>> sums, List<Double> thresholds) {
+        int N = thresholds.size();
+        int L = sums.size();
+        ArrayList<ArrayList<Double>> result = new ArrayList<ArrayList<Double>>(L);
+
+        for (int m = 0; m < L; m++) {
+            ArrayList<Double> mthRow = new ArrayList<Double>(Collections.nCopies(N,0.0));
+            Collections.sort(sums.get(m));
+            int sampleSize = sums.get(m).size();
+            int n = 0;
+            int j = 0;  //index within the ordered set of qualitySum samples
+            while (n < N && j < sampleSize) {
+                if (thresholds.get(n) > sums.get(m).get(j)) {
+                    j++;
+                }
+                else {
+                    n++;
+                    result.get(m).set(n, (double) (sampleSize - j)/sampleSize);
+                }
+            }
+            result.add(mthRow);
+        }
+        return result;
+
+    }
+    
 
     //Utility function for making table of binomial distribution probabilities nCm * (0.5)^n
     //for n = 0, 1 . . . N - 1 and m = 0, 1. . . n
