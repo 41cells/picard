@@ -47,13 +47,38 @@ public class TheoreticalSensitivity {
             }
         }
 
+        List<ArrayList<Double>> altDepthDistribution = hetAltDepthDistribution(N);
         double result = 0.0;
         for (int n = 0; n < N; n++) {
             for (int m = 0; m <= n; m++) {
-                result += probabilityToExceedThreshold.get(m).get(n);
+                result += depthDistribution.get(n) * altDepthDistribution.get(n).get(m)* probabilityToExceedThreshold.get(m).get(n);
             }
         }
         return result;
+    }
+
+    //Utility function for making table of binomial distribution probabilities nCm * (0.5)^n
+    //for n = 0, 1 . . . N - 1 and m = 0, 1. . . n
+    public static List<ArrayList<Double>> hetAltDepthDistribution(final int N) {
+        List<ArrayList<Double>> table = new ArrayList<ArrayList<Double>>();
+        for (int n = 0; n < N; n++) {
+            ArrayList<Double> nthRow = new ArrayList<Double>();
+            ArrayList<Double> prevRow = n == 0 ? null : table.get(n - 1);
+
+            //Add the m = 0 element
+            nthRow.add(n == 0 ? 1 : 0.5*prevRow.get(0));
+
+            //add elements 1 through n - 1.  Note that nCm = (n-1)C(m-1) * (n/m)
+            for (int m = 1; m < n; m++) nthRow.add(0.5*n*prevRow.get(m - 1)/m);
+
+            //add element m = n, which equals the m = 0 element
+            nthRow.add(nthRow.get(0));
+
+            table.add(nthRow);
+        }
+
+        return table;
+
     }
 
 
@@ -101,9 +126,4 @@ public class TheoreticalSensitivity {
 
     }
 
-    //Utility class for making table of binomial distribution probabilities nCm * (0.5)^n
-    //for n = 0, 1 . . . N - 1 and m = 0, 1. . . n
-    public static class hetAltDepthDistribution {
-        BinomialDistributionTable(int N)
-    }
 }
