@@ -19,7 +19,7 @@ public class TheoreticalSensitivity {
         RouletteWheel qualitySampler = new RouletteWheel(qualityDistribution);
 
         //qualitySums[m] is a random sample of sums of m quality scores, for m = 0, 1, N - 1
-        List<ArrayList<Double>> qualitySums = qualitySampler.sampleCumulativeSums(N, sampleSize);
+        List<ArrayList<Integer>> qualitySums = qualitySampler.sampleCumulativeSums(N, sampleSize);
 
         //if a quality sum of m qualities exceeds the quality sum threshold for n total reads, a SNP is called
         ArrayList<Double> qualitySumThresholds = new ArrayList<Double>(N);
@@ -102,7 +102,7 @@ public class TheoreticalSensitivity {
             }
         }
 
-        public double draw() {
+        public int draw() {
             while (true) {
                 int n = (int) (N * Math.random());
                 if (Math.random() < probabilities.get(n)) return n;
@@ -110,12 +110,12 @@ public class TheoreticalSensitivity {
         }
 
         //get samples of sums of 0, 1, 2,. . .  N - 1 draws
-        public List<ArrayList<Double>> sampleCumulativeSums(final int maxNumberOfSummands, final int sampleSize) {
-            List<ArrayList<Double>> result = new ArrayList<ArrayList<Double>>();
-            for (int m = 0; m < maxNumberOfSummands; m++) result.add(new ArrayList<Double>());
+        public List<ArrayList<Integer>> sampleCumulativeSums(final int maxNumberOfSummands, final int sampleSize) {
+            List<ArrayList<Integer>> result = new ArrayList<ArrayList<Integer>>();
+            for (int m = 0; m < maxNumberOfSummands; m++) result.add(new ArrayList<Integer>());
 
             for (int iteration = 0; iteration < sampleSize; iteration++) {
-                double cumulativeSum = 0;
+                int cumulativeSum = 0;
                 for (int m = 0; m < maxNumberOfSummands; m++) {
                     result.get(m).add(cumulativeSum);
                     cumulativeSum += draw();
